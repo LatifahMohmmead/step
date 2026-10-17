@@ -1,0 +1,147 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>STEP Quiz</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header class="topbar">
+  <button class="brand" id="homeBtn" type="button" aria-label="الرئيسية">
+    <span class="brand-mark">S</span>
+    <span class="brand-text">
+      <strong>STEP Quiz</strong>
+      <small>القواعد · القراءة · الاستماع · نماذج الاختبار</small>
+    </span>
+  </button>
+  <div class="top-stats" id="topStats"></div>
+</header>
+
+<main id="app"></main>
+
+<template id="tpl-home">
+  <section class="home">
+    <div class="sec-tabs" id="secTabs" role="tablist" aria-label="القسم"></div>
+    <div class="hero">
+      <h1 id="heroTitle">اختر النموذج الذي تريد الاختبار فيه</h1>
+      <p class="muted" id="heroSub"></p>
+    </div>
+
+    <div class="toolbar">
+      <div class="seg" role="group" aria-label="تصفية">
+        <button type="button" class="seg-btn active" data-filter="all">الكل</button>
+        <button type="button" class="seg-btn" data-filter="todo">لم يُختبر</button>
+        <button type="button" class="seg-btn" data-filter="weak">يحتاج إعادة</button>
+        <button type="button" class="seg-btn" data-filter="done">مُتقَن</button>
+      </div>
+      <div class="toggles">
+        <label class="switch"><input type="checkbox" id="optShuffleQ"><span class="track"></span><span id="shuffleQLabel">خلط ترتيب الأسئلة</span></label>
+        <label class="switch"><input type="checkbox" id="optShuffleO"><span class="track"></span><span>خلط الخيارات</span></label>
+        <label class="switch" id="blindWrap" hidden><input type="checkbox" id="optBlind"><span class="track"></span><span>وضع الاختبار الحقيقي (الإجابات في النهاية)</span></label>
+      </div>
+    </div>
+
+    <div class="grid" id="modelGrid"></div>
+
+    <div class="special">
+      <button type="button" class="special-card" id="randomBtn">
+        <span class="sc-icon">⟳</span>
+        <span>
+          <strong id="randomTitle">اختبار عشوائي شامل</strong>
+          <small class="muted" id="randomSub">40 سؤال مختلط من جميع النماذج</small>
+        </span>
+      </button>
+      <button type="button" class="special-card" id="mistakesBtn">
+        <span class="sc-icon warn">!</span>
+        <span>
+          <strong id="mistakesTitle">بنك أخطائي</strong>
+          <small class="muted" id="mistakesSub"></small>
+        </span>
+      </button>
+    </div>
+  </section>
+</template>
+
+<template id="tpl-quiz">
+  <section class="quiz" id="quizWrap">
+    <div class="quiz-head">
+      <button type="button" class="ghost" id="quitBtn">→ النماذج</button>
+      <div class="quiz-title" id="quizTitle"></div>
+      <div class="live">
+        <span class="pill time" id="liveTimeWrap" title="الوقت" hidden>⏱ <b id="liveTime" dir="ltr">0:00</b></span>
+        <span class="pill done" id="liveDoneWrap" title="تمت الإجابة" hidden>✎ <b id="liveDone">0</b></span>
+        <span class="pill ok" title="صحيحة">✓ <b id="liveOk">0</b></span>
+        <span class="pill bad" title="خاطئة">✗ <b id="liveBad">0</b></span>
+      </div>
+    </div>
+    <div class="progress"><div class="bar" id="bar"></div></div>
+    <div class="dots" id="dots"></div>
+
+    <div class="quiz-body">
+      <details class="passage" id="passage" open hidden>
+        <summary>القطعة <span class="muted">(اضغط للإخفاء/الإظهار)</span></summary>
+        <div class="passage-inner" id="passageInner"></div>
+      </details>
+
+      <div class="qcol">
+        <article class="qcard" id="qcard">
+          <div class="qmeta">
+            <span class="qleft"><span class="qsec" id="qSec" hidden></span><span id="qCount"></span></span>
+            <span class="qtools">
+              <button type="button" class="tbtn" id="trBtn" hidden aria-pressed="false" title="إظهار ترجمة السؤال">ترجمة</button>
+              <button type="button" class="tbtn" id="hintBtn" hidden aria-pressed="false" title="إظهار الجمل المظللة في القطعة">تلميحات</button>
+              <span class="qnum" id="qNum"></span>
+            </span>
+          </div>
+          <div class="qctx" id="qCtx" dir="ltr" hidden></div>
+          <div class="qtext" id="qText" dir="ltr"></div>
+          <div class="qtrans" id="qTrans" dir="rtl" hidden></div>
+          <div class="options" id="options" dir="ltr"></div>
+          <div class="feedback" id="feedback" aria-live="polite"></div>
+        </article>
+
+        <div class="quiz-actions">
+          <span class="hint muted">اختصارات: 1–4 أو A–D للاختيار، Enter للتالي</span>
+          <button type="button" class="primary" id="nextBtn" disabled>التالي ←</button>
+        </div>
+      </div>
+    </div>
+  </section>
+</template>
+
+<template id="tpl-result">
+  <section class="result">
+    <div class="result-card">
+      <div class="ring" id="ring"><div class="ring-inner"><b id="pct" dir="ltr"></b><small>الدرجة</small></div></div>
+      <div class="result-info">
+        <h2 id="resTitle"></h2>
+        <p class="muted" id="resMsg"></p>
+        <div class="res-stats" dir="rtl">
+          <div><b class="c-ok" id="resOk"></b><small>صحيحة</small></div>
+          <div><b class="c-bad" id="resBad"></b><small>خاطئة</small></div>
+          <div><b id="resTime"></b><small>الوقت</small></div>
+          <div><b id="resBest" dir="ltr"></b><small>أفضل نتيجة</small></div>
+        </div>
+        <div class="sec-break" id="secBreak" hidden></div>
+        <div class="res-actions">
+          <button type="button" class="primary" id="retryBtn">↻ إعادة الاختبار</button>
+          <button type="button" class="secondary" id="retryWrongBtn">إعادة الأسئلة الخاطئة فقط</button>
+          <button type="button" class="ghost" id="backBtn">العودة للنماذج</button>
+        </div>
+      </div>
+    </div>
+    <h3 class="review-title" id="reviewTitle"></h3>
+    <div class="review" id="review" dir="ltr"></div>
+  </section>
+</template>
+
+<script src="data.js"></script>
+<script src="data-reading.js"></script>
+<script src="data-listening.js"></script>
+<script src="data-exams.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
